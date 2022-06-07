@@ -20,7 +20,7 @@ const controls = new OrbitControls(camera, renderer.domElement);
 setupViewer(scene, camera, renderer, controls);
 
 // MESH
-addMesh(scene, "/components/smooth94.stl", false);
+addMesh(scene, "/smooth94.stl", false);
 
 // GROUND
 const ground = Ground();
