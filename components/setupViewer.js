@@ -8,6 +8,6 @@ export function setupViewer(scene, camera, renderer, controls) {
   camera.position.set(0, 3, 5);
   camera.lookAt(0, 0, 0);
 
-  controls.maxPolarAngle = Math.PI / 2;
+  // controls.maxPolarAngle = Math.PI / 2;
   controls.update();
 }

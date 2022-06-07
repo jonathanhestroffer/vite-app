@@ -32,7 +32,9 @@ ground.position.y = -1.5;
 scene.add(ground);
 
 // LIGHTS
-addLights(scene);
+addLights(scene, camera);
+scene.add(camera);
+console.log(camera.children);
 
 function getObjects() {
   objects = scene.children;
