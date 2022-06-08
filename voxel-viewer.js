@@ -18,7 +18,7 @@ const renderer = new THREE.WebGLRenderer({
   alpha: true,
   antialias: true,
 });
-renderer.outputEncoding = THREE.sRGBEncoding;
+// renderer.outputEncoding = THREE.sRGBEncoding;
 const controls = new OrbitControls(camera, renderer.domElement);
 setupViewer(scene, camera, renderer, controls);
 
@@ -28,7 +28,7 @@ ground.position.y = -1.5;
 scene.add(ground);
 
 // LIGHTS
-addLights(scene);
+addLights(scene, camera);
 
 // RAYCASTER
 const raycaster = new THREE.Raycaster();
@@ -44,6 +44,7 @@ document.addEventListener("mousedown", onDocumentMouseDown);
 
 // Mesh
 addMesh(scene, "voxel");
+// addMesh(scene, "smooth");
 
 function onDocumentMouseMove(event) {
   event.preventDefault();
@@ -52,7 +53,14 @@ function onDocumentMouseMove(event) {
 
   // intersections
   raycaster.setFromCamera(mouse, camera);
-  const intersects = raycaster.intersectObjects(scene.children, false);
+  var rayObjects = [];
+  scene.children.forEach(function (object) {
+    if (!object.name.includes("lines")) {
+      rayObjects.push(object);
+    }
+  });
+  // const intersects = raycaster.intersectObjects(scene.children, false);
+  const intersects = raycaster.intersectObjects(rayObjects, false);
   if (state == 0) {
     // find intersections, highlight if mouse not down
     if (intersects.length > 0) {
@@ -103,34 +111,20 @@ function onDoubleClick() {
           if (object.name.includes("mesh") && INTERSECTED != object) {
             object.visible = false;
           }
+          if (object.name.includes("lines")) {
+            if (object.name.split("_")[1] != INTERSECTED.name.split("_")[1]) {
+              object.visible = false;
+            }
+          }
         });
-
         state = 1;
         INTERSECTED.material.emissive.setHex(INTERSECTED.currentHex);
-
-        // Add Edges
-        let edges;
-        if (INTERSECTED.name.includes("smooth")) {
-          edges = new THREE.WireframeGeometry(INTERSECTED.geometry, 25);
-        } else {
-          edges = new THREE.EdgesGeometry(INTERSECTED.geometry, 25);
-        }
-        const lines = new THREE.LineSegments(
-          edges,
-          new THREE.LineBasicMaterial({ color: 0x000000 })
-        );
-        lines.rotation.x = -Math.PI / 2;
-        lines.name = "lines";
-        scene.add(lines);
       }
     }
   } else {
     scene.children.forEach(function (object) {
-      if (object.name.includes("mesh")) {
+      if (object.name.includes("_")) {
         object.visible = true;
-      }
-      if (object.name.includes("lines")) {
-        scene.remove(object);
       }
     });
     state = 0;

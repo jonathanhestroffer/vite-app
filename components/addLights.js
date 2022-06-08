@@ -1,13 +1,13 @@
 import * as THREE from "three";
 
-export function addLights(scene) {
+export function addLights(scene, camera) {
   const ambLight = new THREE.AmbientLight(0x000000, 0.14);
   // scene.add(ambLight);
   const dirLight1 = new THREE.DirectionalLight(0xffffff, 1);
-  const dirLight2 = new THREE.DirectionalLight(0xffffff, 0.2);
-  const dirLight3 = new THREE.DirectionalLight(0xffffff, 0.1);
-  const dirLight4 = new THREE.DirectionalLight(0xffffff, 0.1);
-  const dirLight5 = new THREE.DirectionalLight(0xffffff, 0.1);
+  const dirLight2 = new THREE.DirectionalLight(0xffffff, 0.3);
+  const dirLight3 = new THREE.DirectionalLight(0xffffff, 0.3);
+  const dirLight4 = new THREE.DirectionalLight(0xffffff, 0.3);
+  const dirLight5 = new THREE.DirectionalLight(0xffffff, 0.3);
   dirLight1.castShadow = true;
   dirLight1.position.set(0, 10, 0);
   // dirLight1.shadow.mapSize.width = 512 * 10; // default
