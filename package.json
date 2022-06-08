@@ -8,9 +8,12 @@
     "preview": "vite preview"
   },
   "devDependencies": {
+    "dat.gui": "^0.7.9",
     "vite": "^2.9.9"
   },
   "dependencies": {
+    "pleasejs": "^0.4.2",
+    "randomcolor": "^0.6.2",
     "three": "^0.141.0"
   }
 }

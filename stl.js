@@ -6,10 +6,9 @@ import { setupViewer } from "./components/setupViewer";
 import { Ground } from "./components/Ground";
 import { addMesh } from "./components/addMesh";
 
-let leftClick;
-let rightClick;
+let singleClick;
+let doubleClick;
 let INTERSECTED;
-let objects;
 var state = 0;
 
 const camera = new THREE.PerspectiveCamera(40, 1, 0.1, 100000);
@@ -19,12 +18,9 @@ const renderer = new THREE.WebGLRenderer({
   alpha: true,
   antialias: true,
 });
+renderer.outputEncoding = THREE.sRGBEncoding;
 const controls = new OrbitControls(camera, renderer.domElement);
 setupViewer(scene, camera, renderer, controls);
-
-// MESH
-addMesh(scene, "./models94.stl", false);
-addMesh(scene, "./models94_Vox.stl", false);
 
 // GROUND
 const ground = Ground();
@@ -32,32 +28,22 @@ ground.position.y = -1.5;
 scene.add(ground);
 
 // LIGHTS
-addLights(scene, camera);
-scene.add(camera);
-console.log(camera.children);
-
-function getObjects() {
-  objects = scene.children;
-  return objects;
-}
+addLights(scene);
 
 // RAYCASTER
 const raycaster = new THREE.Raycaster();
 const mouse = new THREE.Vector2();
+mouse.x = 100;
+mouse.y = 100;
 const rect = renderer.domElement.getBoundingClientRect();
 
-function resetMouse() {
-  mouse.x = 100;
-  mouse.y = 100;
-}
-
-resetMouse();
-
-// LISTENEERS
+// LISTENERS
 document.addEventListener("mousemove", onDocumentMouseMove);
 document.addEventListener("mouseup", onDocumentMouseUp);
 document.addEventListener("mousedown", onDocumentMouseDown);
-document.addEventListener("contextmenu", onContextMenu);
+
+// Mesh
+addMesh(scene, "voxel");
 
 function onDocumentMouseMove(event) {
   event.preventDefault();
@@ -69,7 +55,7 @@ function onDocumentMouseMove(event) {
   const intersects = raycaster.intersectObjects(scene.children, false);
   if (state == 0) {
     // find intersections, highlight if mouse not down
-    if (intersects.length > 0 && !leftClick) {
+    if (intersects.length > 0) {
       if (INTERSECTED != intersects[0].object) {
         if (INTERSECTED) {
           if (INTERSECTED.material.emissive) {
@@ -95,89 +81,61 @@ function onDocumentMouseMove(event) {
 
 function onDocumentMouseUp(event) {
   event.preventDefault();
-  leftClick = false;
+  singleClick = false;
 }
 
 function onDocumentMouseDown(event) {
   event.preventDefault();
-  leftClick = true;
+  if (event.detail == 1) {
+    singleClick = true;
+  } else if (event.detail == 2) {
+    doubleClick = true;
+    onDoubleClick();
+  }
 }
 
-function onContextMenu(event) {
-  event.preventDefault();
-  objects = getObjects();
-  rightClick = true;
+function onDoubleClick() {
   if (state != 1) {
     if (INTERSECTED) {
-      if (INTERSECTED.name == "mesh") {
+      if (INTERSECTED.name.includes("mesh")) {
         // Isolate Object
-        objects.forEach(function (object) {
-          if (object.name == "mesh" && INTERSECTED != object) {
-            console.log(state);
-            console.log(object.name);
-            scene.remove(object);
+        scene.children.forEach(function (object) {
+          if (object.name.includes("mesh") && INTERSECTED != object) {
+            object.visible = false;
           }
         });
+
         state = 1;
         INTERSECTED.material.emissive.setHex(INTERSECTED.currentHex);
+
+        // Add Edges
+        let edges;
+        if (INTERSECTED.name.includes("smooth")) {
+          edges = new THREE.WireframeGeometry(INTERSECTED.geometry, 25);
+        } else {
+          edges = new THREE.EdgesGeometry(INTERSECTED.geometry, 25);
+        }
+        const lines = new THREE.LineSegments(
+          edges,
+          new THREE.LineBasicMaterial({ color: 0x000000 })
+        );
+        lines.rotation.x = -Math.PI / 2;
+        lines.name = "lines";
+        scene.add(lines);
       }
     }
   } else {
-    raycaster.setFromCamera(mouse, camera);
-    const intersects = raycaster.intersectObjects(scene.children, false);
-    if (intersects[0]) {
-      const object = intersects[0].object;
-      console.log(object);
-      if (object.name == "mesh") {
-        state = 1;
-        console.log(state);
-        console.log(object.name);
-      } else {
-        Repopulate();
-        state = 0;
+    scene.children.forEach(function (object) {
+      if (object.name.includes("mesh")) {
+        object.visible = true;
       }
-    } else {
-      Repopulate();
-      state = 0;
-    }
-  }
-
-  function Repopulate() {
-    // Remove All Objects
-    objects.forEach(function (object) {
-      if (object.name == "mesh") {
+      if (object.name.includes("lines")) {
         scene.remove(object);
       }
     });
-    // Repopulate
-    addMesh(scene, "./models94.stl", false);
-    addMesh(scene, "./models94_Vox.stl", false);
+    state = 0;
   }
-  return false;
 }
-
-//   // Isolate
-//   objects.forEach(function (object) {
-//     if (object.name == "mesh" && INTERSECTED != object) {
-//       console.log(object.name);
-//       scene.remove(object);
-//       // object.visible = false;
-//     }
-//   });
-//   INTERSECTED.material.emissive.setHex(null);
-//   var bbox = new THREE.Box3().setFromObject(INTERSECTED);
-// }
-//
-// ifelse {
-//   // Remove
-//   objects.forEach(function (object) {
-//     if (object.name == "mesh") {
-//       scene.remove(object);
-//     }
-//   });
-//   addMesh(scene, "./models94.stl", false);
-//   addMesh(scene, "./models94_Vox.stl", false);
-//   state = 0;
 
 function animate() {
   requestAnimationFrame(animate, renderer.domElement);
@@ -185,7 +143,6 @@ function animate() {
 }
 
 function render() {
-  // render
   renderer.render(scene, camera);
 }
 
