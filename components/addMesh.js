@@ -3,12 +3,6 @@ import { STLLoader } from "three/examples/jsm/loaders/STLLoader";
 import randomColor from "./randomColor";
 
 export async function addMesh(scene, type) {
-  var edges;
-  var emiInt;
-  if (type == "smooth") {
-    emiInt = 1;
-  } else emiInt = 0.5;
-
   const colors = randomColor({
     hue: "blue",
     count: 22,
@@ -17,9 +11,6 @@ export async function addMesh(scene, type) {
   });
 
   for (let i = 0; i < 22; i++) {
-    if (i == 18) {
-      console.log(colors[i]);
-    }
     const material = new THREE.MeshStandardMaterial({
       color: colors[i],
       emissive: colors[i],
@@ -30,22 +21,40 @@ export async function addMesh(scene, type) {
     loader.load(meshPath, function (geometry) {
       const mesh = new THREE.Mesh(geometry, material);
       mesh.castShadow = true;
-      mesh.name = "mesh_" + i.toString();
+      mesh.name = "mesh_" + type + "_" + i.toString();
       mesh.rotation.x = -Math.PI / 2;
       scene.add(mesh);
 
       if (type == "smooth") {
-        edges = new THREE.WireframeGeometry(mesh.geometry, 25);
+        const edges1 = new THREE.EdgesGeometry(mesh.geometry, 25);
+        const edges2 = new THREE.WireframeGeometry(mesh.geometry);
+        const lines1 = new THREE.LineSegments(
+          edges1,
+          new THREE.LineBasicMaterial({ color: 0x000000 })
+        );
+        const lines2 = new THREE.LineSegments(
+          edges2,
+          new THREE.LineBasicMaterial({ color: 0x000000 })
+        );
+        lines1.rotation.x = -Math.PI / 2;
+        lines2.rotation.x = -Math.PI / 2;
+        lines1.name = "lines1_" + type + "_" + i.toString();
+        lines2.name = "lines2_" + type + "_" + i.toString();
+        scene.add(lines1);
+        scene.add(lines2);
+        mesh.visible = false;
+        lines1.visible = false;
+        lines2.visible = false;
       } else {
-        edges = new THREE.EdgesGeometry(mesh.geometry, 25);
+        const edges = new THREE.EdgesGeometry(mesh.geometry, 25);
+        const lines = new THREE.LineSegments(
+          edges,
+          new THREE.LineBasicMaterial({ color: 0x000000 })
+        );
+        lines.rotation.x = -Math.PI / 2;
+        lines.name = "lines_" + type + "_" + i.toString();
+        scene.add(lines);
       }
-      const lines = new THREE.LineSegments(
-        edges,
-        new THREE.LineBasicMaterial({ color: 0x000000 })
-      );
-      lines.rotation.x = -Math.PI / 2;
-      lines.name = "lines_" + i.toString();
-      scene.add(lines);
     });
   }
 }

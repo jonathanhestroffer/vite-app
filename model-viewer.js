@@ -41,10 +41,56 @@ const rect = renderer.domElement.getBoundingClientRect();
 document.addEventListener("mousemove", onDocumentMouseMove);
 document.addEventListener("mouseup", onDocumentMouseUp);
 document.addEventListener("mousedown", onDocumentMouseDown);
+document.addEventListener("contextmenu", onContextMenu);
 
 // Mesh
 addMesh(scene, "voxel");
-// addMesh(scene, "smooth");
+addMesh(scene, "smooth");
+
+controls.target.set(0, 0, 0);
+
+function getCenterPoint(mesh) {
+  var geometry = mesh.geometry;
+  geometry.computeBoundingBox();
+  var center = new THREE.Vector3();
+  geometry.computeBoundingBox();
+  geometry.boundingBox.getCenter(center);
+  mesh.localToWorld(center);
+  return center;
+}
+
+function onlyUnique(value, index, self) {
+  return self.indexOf(value) === index;
+}
+
+function onContextMenu(event) {
+  event.preventDefault();
+  var mesh_type = "";
+  let featIds = [];
+  // get mesh type
+  scene.children.forEach(function (object) {
+    if (object.name.includes("_") && object.visible == true) {
+      mesh_type = object.name.split("_")[1];
+    }
+  });
+  // get feature ids
+  scene.children.forEach(function (object) {
+    if (object.name.includes(mesh_type) && object.visible) {
+      object.visible = false;
+      featIds.push(object.name.split("_")[2]);
+    }
+  });
+  featIds = featIds.filter(onlyUnique);
+  // make opposite model visible
+  scene.children.forEach(function (object) {
+    if (
+      !object.name.includes(mesh_type) &&
+      featIds.includes(object.name.split("_")[2])
+    ) {
+      object.visible = true;
+    }
+  });
+}
 
 function onDocumentMouseMove(event) {
   event.preventDefault();
@@ -55,11 +101,10 @@ function onDocumentMouseMove(event) {
   raycaster.setFromCamera(mouse, camera);
   var rayObjects = [];
   scene.children.forEach(function (object) {
-    if (!object.name.includes("lines")) {
+    if (!object.name.includes("lines") && object.visible == true) {
       rayObjects.push(object);
     }
   });
-  // const intersects = raycaster.intersectObjects(scene.children, false);
   const intersects = raycaster.intersectObjects(rayObjects, false);
   if (state == 0) {
     // find intersections, highlight if mouse not down
@@ -103,32 +148,53 @@ function onDocumentMouseDown(event) {
 }
 
 function onDoubleClick() {
+  let mesh_type;
   if (state != 1) {
     if (INTERSECTED) {
       if (INTERSECTED.name.includes("mesh")) {
+        mesh_type = INTERSECTED.name.split("_")[1];
         // Isolate Object
         scene.children.forEach(function (object) {
           if (object.name.includes("mesh") && INTERSECTED != object) {
             object.visible = false;
+          } else {
           }
           if (object.name.includes("lines")) {
-            if (object.name.split("_")[1] != INTERSECTED.name.split("_")[1]) {
+            if (object.name.split("_")[2] != INTERSECTED.name.split("_")[2]) {
               object.visible = false;
             }
           }
         });
         state = 1;
         INTERSECTED.material.emissive.setHex(INTERSECTED.currentHex);
+        const center = getCenterPoint(INTERSECTED);
+        controls.target.set(center.x, center.y, center.z);
+        var camD = Math.sqrt(
+          (center.x - camera.position.x) ** 2 +
+            (center.y - camera.position.y) ** 2 +
+            (center.z - camera.position.z) ** 2
+        );
+        camera.position.x *= 3.5 / camD;
+        camera.position.y *= 3.5 / camD;
+        camera.position.z *= 3.5 / camD;
       }
     }
   } else {
     scene.children.forEach(function (object) {
-      if (object.name.includes("_")) {
+      if (object.name.includes("_") && object.visible == true) {
+        mesh_type = object.name.split("_")[1];
+      }
+    });
+    scene.children.forEach(function (object) {
+      if (object.name.includes(mesh_type)) {
         object.visible = true;
       }
     });
     state = 0;
+    controls.target.set(0, 0, 0);
+    camera.position.set(3, 3, 5);
   }
+  controls.update();
 }
 
 function animate() {
