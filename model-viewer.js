@@ -3,8 +3,9 @@ import * as THREE from "three";
 import { OrbitControls } from "three/examples/jsm/controls/OrbitControls";
 import { addLights } from "./components/addLights";
 import { setupViewer } from "./components/setupViewer";
-import { Ground } from "./components/Ground";
 import { addMesh } from "./components/addMesh";
+import { FlakesTexture } from "three/examples/jsm/textures/FlakesTexture";
+import { RGBELoader } from "three/examples/jsm/loaders/RGBELoader";
 
 let singleClick;
 let doubleClick;
@@ -21,11 +22,6 @@ const renderer = new THREE.WebGLRenderer({
 // renderer.outputEncoding = THREE.sRGBEncoding;
 const controls = new OrbitControls(camera, renderer.domElement);
 setupViewer(scene, camera, renderer, controls);
-
-// GROUND
-const ground = Ground();
-ground.position.y = -1.5;
-scene.add(ground);
 
 // LIGHTS
 addLights(scene, camera);
